@@ -196,15 +196,27 @@ function updateEloRatings(teamA, teamB, wins, ties, losses) {
   const expectedRatioB = 1 / (1 + Math.pow(10, (teamA.eloRating - teamB.eloRating) / 400));
 
   const mapsPlayed = wins[0] + ties[0] + losses[0];
-  const eA = expectedRatioA * mapsPlayed;
-  const eB = expectedRatioB * mapsPlayed;
-  const sA = wins[0] + 0.5 * ties[0];
-  const sB = wins[1] + 0.5 * ties[1];
-  const newRatingA = teamA.eloRating + ELO_K * (sA - eA);
-  const newRatingB = teamB.eloRating + ELO_K * (sB - eB);
+  const eA = expectedRatioA;
+  const eB = expectedRatioB;
+  const mapWrA = (wins[0] + 0.5 * ties[0]) / mapsPlayed;
+  const mapWrB = (wins[1] + 0.5 * ties[1]) / mapsPlayed;
+  let sA, sB;
+  if (ONLY_WEIGH_MAP_WINS) {
+    // If we're only weighing map wins, we don't care whether this team won or lost
+    sA = mapWrA;
+    sB = mapWrB;
+  } else {
+    // Otherwise, half of our score is from map wins, half is from actually winning games
+    sA = mapWrA / 2 + (wins[0] > wins[1] ? 0.5 : 0);
+    sB = mapWrB / 2 + (wins[1] > wins[0] ? 0.5 : 0);
+  }
+
+  const newRatingA = teamA.eloRating + ELO_K_BY_STAGE[simulationState.curStage] * (sA - eA);
+  const newRatingB = teamB.eloRating + ELO_K_BY_STAGE[simulationState.curStage] * (sB - eB);
 
   let trunc = (n, count) => Math.floor(n * Math.pow(10, count || 3)) / Math.pow(10, count || 3); // Truncate to count decimal pos
-  console.log(`Match: ${teamA.name} vs ${teamB.name} (${wins[0]} - ${wins[1]}) | (E${trunc(eA)}-${trunc(eB)}, S${trunc(sA)}-${trunc(sB)})`);
+  console.log(`Match: ${teamA.name} vs ${teamB.name} (${wins[0]} - ${wins[1]}) | ` +
+    `(E${trunc(eA * mapsPlayed, 1)}-${trunc(eB * mapsPlayed, 1)}, S${trunc(sA * mapsPlayed, 1)}-${trunc(sB * mapsPlayed, 1)})`);
   console.log(`  ${teamA.abbreviatedName}: ${Math.floor(teamA.eloRating)} -> ${Math.floor(newRatingA)} (${trunc(newRatingA - teamA.eloRating, 2)})`);
   console.log(`  ${teamB.abbreviatedName}: ${Math.floor(teamB.eloRating)} -> ${Math.floor(newRatingB)} (${trunc(newRatingB - teamB.eloRating, 2)})`);
 
@@ -213,8 +225,14 @@ function updateEloRatings(teamA, teamB, wins, ties, losses) {
 }
 
 //////////////////// MAIN \\\\\\\\\\\\\\\\\\\\\\\
-const INITIAL_ELO_RANK = 2500;
-const ELO_K = 75;
+const INITIAL_ELO_RANK = 2000;
+const ELO_K_BY_STAGE = {
+  1: 75,
+  2: 50,
+  3: 50,
+  4: 125
+};
+const ONLY_WEIGH_MAP_WINS = false;
 
 // Global variables
 let undoStack;
