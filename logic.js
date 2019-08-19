@@ -54,10 +54,7 @@ function undoStep() {
     return; // Nothing to undo
   }
 
-  console.log(simulationState);
   simulationState = undoStack.pop();
-  console.log(simulationState);
-
   updateRender();
 }
 
@@ -109,13 +106,11 @@ function simulateStep() {
 }
 
 function evaluateMatch(match) {
-  const teamA = simulationState.teamList.find(ele => ele.id == match.competitors[0].id);
-  const teamB = simulationState.teamList.find(ele => ele.id == match.competitors[1].id);
-  const resultA = match.scores[0].value;
-  const resultB = match.scores[1].value;
+  let teamA = simulationState.teamList.find(ele => ele.id == match.competitors[0].id);
+  let teamB = simulationState.teamList.find(ele => ele.id == match.competitors[1].id);
 
   // Update scoreboard (wins/losses)
-  if (resultA > resultB) {
+  if (match.scores[0].value > match.scores[1].value) { // Final score A > B
     teamA.wins++;
     teamB.losses++;
   } else {
@@ -132,7 +127,7 @@ function evaluateMatch(match) {
   teamB.mapsLost += match.losses[1];
 
   // Update ELO
-  updateEloRatings(teamA, teamB, resultA, resultB, match.conclusionValue);
+  updateEloRatings(teamA, teamB, match.wins, match.ties, match.losses);
 }
 
 let offsetsByPos;
@@ -186,21 +181,24 @@ function updateRender() {
   }
 }
 
-function updateEloRatings(teamA, teamB, resultA, resultB, conclusionValue) {
-  // Get the expected ratios for each team, multiply them for the conclusionValue to
-  // get the expected points for our team (conclusionValue is either 4 or 5)
+function updateEloRatings(teamA, teamB, wins, ties, losses) {
+  // Get the expected win ratios for each team, then multiply those by the maps played
+  // The actual win value will be
   const expectedRatioA = 1 / (1 + Math.pow(10, (teamB.eloRating - teamA.eloRating) / 400));
   const expectedRatioB = 1 / (1 + Math.pow(10, (teamA.eloRating - teamB.eloRating) / 400));
 
-  const draws = conclusionValue - resultA - resultB; // Get the amount of draws that took place. These are worth a virtual 0.5 to each team
-  const eA = expectedRatioA * conclusionValue;
-  const eB = expectedRatioB * conclusionValue;
-  const newRatingA = teamA.eloRating + teamA.k * (resultA + 0.5 * draws - eA);
-  const newRatingB = teamB.eloRating + teamB.k * (resultB + 0.5 * draws - eB);
+  const mapsPlayed = wins[0] + ties[0] + losses[0];
+  const eA = expectedRatioA * mapsPlayed;
+  const eB = expectedRatioB * mapsPlayed;
+  const sA = wins[0] + 0.5 * ties[0];
+  const sB = wins[1] + 0.5 * ties[1];
+  const newRatingA = teamA.eloRating + teamA.k * (sA - eA);
+  const newRatingB = teamB.eloRating + teamB.k * (sB - eB);
 
-  console.log(`Match: ${teamA.name} vs ${teamB.name} (${resultA} - ${resultB}) - (${eA} - ${eB})`);
-  console.log(`  ${teamA.abbreviatedName}: ${teamA.eloRating} -> ${newRatingA} (${newRatingA - teamA.eloRating})`);
-  console.log(`  ${teamB.abbreviatedName}: ${teamB.eloRating} -> ${newRatingB} (${newRatingB - teamB.eloRating})`);
+  let trunc = (n, count) => Math.floor(n * Math.pow(10, count || 3)) / Math.pow(10, count || 3); // Truncate to count decimal pos
+  console.log(`Match: ${teamA.name} vs ${teamB.name} (${wins[0]} - ${wins[1]}) | (E${trunc(eA)}-${trunc(eB)}, S${trunc(sA)}-${trunc(sB)})`);
+  console.log(`  ${teamA.abbreviatedName}: ${Math.floor(teamA.eloRating)} -> ${Math.floor(newRatingA)} (${trunc(newRatingA - teamA.eloRating, 2)})`);
+  console.log(`  ${teamB.abbreviatedName}: ${Math.floor(teamB.eloRating)} -> ${Math.floor(newRatingB)} (${trunc(newRatingB - teamB.eloRating, 2)})`);
 
   teamA.eloRating = newRatingA;
   teamB.eloRating = newRatingB;
