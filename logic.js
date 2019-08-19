@@ -41,8 +41,7 @@ function initialize() {
       losses: 0,
       mapsWon: 0,
       mapsLost: 0,
-      mapsTied: 0,
-      k: FIRST_GAMES_K,
+      mapsTied: 0
     });
 
     simulationState.$teamEleById[teamData[i].id] = $teamEle;
@@ -201,8 +200,8 @@ function updateEloRatings(teamA, teamB, wins, ties, losses) {
   const eB = expectedRatioB * mapsPlayed;
   const sA = wins[0] + 0.5 * ties[0];
   const sB = wins[1] + 0.5 * ties[1];
-  const newRatingA = teamA.eloRating + teamA.k * (sA - eA);
-  const newRatingB = teamB.eloRating + teamB.k * (sB - eB);
+  const newRatingA = teamA.eloRating + ELO_K * (sA - eA);
+  const newRatingB = teamB.eloRating + ELO_K * (sB - eB);
 
   let trunc = (n, count) => Math.floor(n * Math.pow(10, count || 3)) / Math.pow(10, count || 3); // Truncate to count decimal pos
   console.log(`Match: ${teamA.name} vs ${teamB.name} (${wins[0]} - ${wins[1]}) | (E${trunc(eA)}-${trunc(eB)}, S${trunc(sA)}-${trunc(sB)})`);
@@ -211,21 +210,11 @@ function updateEloRatings(teamA, teamB, wins, ties, losses) {
 
   teamA.eloRating = newRatingA;
   teamB.eloRating = newRatingB;
-
-  // Update teams' K if necessary
-  for (let team of [teamA, teamB]) {
-    if (team.wins + team.losses >= K_ESTABLISHED_SWITCH_AFTER_GAMES && team.k != K_ESTABLISHED) {
-      console.log(`Setting ${team.name}'s k to established k: ${K_ESTABLISHED}`);
-      team.k = K_ESTABLISHED;
-    }
-  }
 }
 
 //////////////////// MAIN \\\\\\\\\\\\\\\\\\\\\\\
 const INITIAL_ELO_RANK = 2500;
-const FIRST_GAMES_K = 100;
-const K_ESTABLISHED_SWITCH_AFTER_GAMES = 5;
-const K_ESTABLISHED = 40;
+const ELO_K = 75;
 
 // Global variables
 let undoStack;
