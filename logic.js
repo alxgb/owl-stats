@@ -175,8 +175,17 @@ function updateRender() {
 
     const $score = $teamEle.children[2];
     if (Math.floor(team.eloRating) != Number($score.innerHTML)) {
-      // Our team score is outdated!
-      $score.innerHTML = Math.floor(team.eloRating);
+      // Our displayed score is outdated! Animate it to reach target
+      let o = { score: Number($score.innerHTML) };
+      anime({
+        targets: o,
+        score: team.eloRating,
+        round: 1, // remove the decimals
+        easing: 'linear',
+        update: function () {
+          $score.innerHTML = o.score;
+        }
+      })
     }
   }
 }
