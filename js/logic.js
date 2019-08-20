@@ -313,7 +313,7 @@ function render() {
     const $score = $teamEle.children[2];
     let teamSR = srByTeam[team.id];
     if (settings.roundTeamSR) {
-      teamSR = Math.round(teamSR / 100) * 100
+      teamSR = Math.round(teamSR / 100) * 100;
     }
 
     if (teamSR != Number($score.dataset.score)) {
@@ -323,7 +323,7 @@ function render() {
         score: teamSR,
         round: 1, // remove the decimals
         easing: settings.roundTeamSR ? 'steps(5)' : 'steps(10)',
-        duration: 1000 / settings.animationSpeed,
+        duration: 1000 / (settings.animationSpeed * 1.5),
         update: function () {
           $score.children[1].innerHTML = $score.dataset.score;
           if (getRankBySR($score.dataset.score) != $score.dataset.rank) {
@@ -469,7 +469,7 @@ window.onload = function () {
     onlyWeighMapWins: false,
     autoplay: window.location.hash.includes("no-autoplay") == false,
     roundTeamSR: true,
-    animationSpeed: 2,
+    animationSpeed: 1.5,
     playSpeed: 1,
   };
   updateSettingsDisplay();
