@@ -5,7 +5,6 @@ html, body {
     background-color: rgb(51,51,51);
     overflow-x: hidden;
     font-family: "Noto Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
-
     margin-top: 5px;
 }
 
@@ -18,7 +17,7 @@ html, body {
 }
 
 .content {
-    width: 320px;
+    max-width: 420px;
 }
 
 /* Time */
@@ -29,6 +28,11 @@ html, body {
 .stage, .week {
     text-transform: uppercase;
     font-size: 0.9em;
+}
+
+.teams-header {
+    text-transform: uppercase;
+    font-size: 0.75em;
 }
 
 .stage {
@@ -44,8 +48,20 @@ html, body {
 }
 
 /* Team rows */
+.teams-header {
+    margin-top: 5px;
+    display: flex;
+    align-content: center;
+}
+
+.teams-header span {
+    text-align: center;
+    justify-content: center;
+}
+
 #teams ul {
     margin-left: 0;
+    margin-top: 0;
     padding: 0;
 }
 
@@ -56,8 +72,7 @@ html, body {
     margin: 4px 0;
 }
 
-.team-icon, .team-name, .team-rank {
-    display: inline-block;
+#teams .team-icon, #teams .team-name, #teams .team-rank, #teams .team-internal-rank {
     height: 30px;
     line-height: 30px;
 }
@@ -71,7 +86,7 @@ html, body {
     width: 30px;
 }
 
-.team-name, .team-rank {
+.team-name, .team-rank, .team-internal-rank {
     padding: 3px 0;
 }
 
@@ -79,7 +94,38 @@ html, body {
     padding-left: 10px;
 }
 
+.team-name-abbrv {
+    display: none;
+}
+
+@media (max-width: 400px) {
+    .team-name-full {
+        display: none;
+    }
+
+    .team-name-abbrv {
+        display: block;
+    }
+}
+
 .team-rank {
     margin-left: auto;
     padding-right: 10px;
+    display: flex;
+    min-width: 80px;
+}
+
+.team-rank-icon {
+    margin-left: auto;
+}
+
+.team-rank-icon img {
+    height: 30px;
+    width: 30px;
+}
+
+.team-internal-rank {
+    min-width: 40px;
+    margin: 0 5px;
+    text-align: center;
 }

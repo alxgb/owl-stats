@@ -12,6 +12,25 @@ function deepClone(e) {
   return JSON.parse(JSON.stringify(e));
 }
 
+function getRankBySR(sr) {
+  const breakpoints = {
+    1500: "bronze",
+    2000: "silver",
+    2500: "gold",
+    3000: "plat",
+    3500: "diamond",
+    4000: "master",
+    5000: "gm"
+  };
+
+  for (let breakpoint of Object.keys(breakpoints)) {
+    if (sr < breakpoint) {
+      return breakpoints[breakpoint];
+    }
+  }
+
+  return "bronze";
+}
 function getTeamsSrFromElo(teamList) {
   // Normalize all team's elos, then just build a distribution from 4.5k to 500
   let sum = 0;
@@ -55,11 +74,15 @@ function initialize() {
     const teamIconAlt = getTeamIcon(teamData[i], "altDark");
     const teamIcon = teamIconAlt ? teamIconAlt : getTeamIcon(teamData[i], "main");
     $teamEle.innerHTML = `<span class='team-icon'><img src='${teamIcon.svg}'></span>
-                      <span class='team-name'>${teamData[i].name}</span>
+                      <span class='team-name'>
+                        <span class='team-name-full'>${teamData[i].name}</span>
+                        <span class='team-name-abbrv'>${teamData[i].abbreviatedName}</span>
+                      </span>
                       <span class='team-rank' data-score="0">
                         <span class='team-rank-icon'></span>
                         <span class='team-rank-value'>-</span>
                       </span>
+                      <span class='team-internal-rank' data-value="0">-</span>
                       `;
     const color = hexToRgb(teamData[i].colors[0].color.color); // The color on pos 0 is the real "main" one
     $teamEle.style = `background-color: rgba(${color.r}, ${color.g}, ${color.b}, 0.3);`;
@@ -218,9 +241,26 @@ function updateRender() {
         round: 1, // remove the decimals
         easing: 'linear',
         update: function () {
-          $score.innerHTML = $score.dataset.score;
+          $score.children[1].innerHTML = $score.dataset.score;
+          if (getRankBySR($score.dataset.score) != $score.dataset.rank) {
+            $score.dataset.rank = getRankBySR($score.dataset.score);
+            $score.children[0].innerHTML = "<img src='img/ow_" + getRankBySR($score.dataset.score) + ".png'>";
+          }
         }
-      })
+      });
+    }
+
+    const $internalScore = $teamEle.children[3];
+    if (team.eloRating != Number($internalScore.dataset.value)) {
+      anime({
+        targets: $internalScore.dataset,
+        value: team.eloRating,
+        round: 1, // remove the decimals
+        easing: 'linear',
+        update: function () {
+          $internalScore.innerHTML = $internalScore.dataset.value;
+        }
+      });
     }
   }
 }
