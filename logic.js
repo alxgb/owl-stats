@@ -12,6 +12,37 @@ function deepClone(e) {
   return JSON.parse(JSON.stringify(e));
 }
 
+function getTeamsSrFromElo(teamList) {
+  // Normalize all team's elos, then just build a distribution from 4.5k to 500
+  let sum = 0;
+  for (let team of teamList) {
+    sum += team.eloRating;
+  }
+  let mean = sum / teamList.length;
+
+  let stdDevAccum = 0;
+  for (let team of teamList) {
+    stdDevAccum += Math.pow(team.eloRating - mean, 2);
+  }
+
+  const stdDev = Math.sqrt(stdDevAccum / teamList.length);
+  let eloRankings = {};
+  for (let team of teamList) {
+    if (team.wins + team.losses == 0) {
+      // Unranked team
+      eloRankings[team.id] = 0;
+      continue;
+    }
+
+    const standarizedRank = (team.eloRating - mean) / stdDev;
+    // Slowly inflate rankings overall as teams begin distributing themselves around,
+    // center them around 2.5k, and clamp them to the 1 - 5000 range
+    eloRankings[team.id] = Math.min(5000, Math.max(1, standarizedRank * (500 + Math.min(50, stdDev) * 10) + 2500));
+  }
+
+  return eloRankings;
+}
+
 function initialize() {
   simulationState = { curStage: 1, curWeekIdx: 0, nextMatchIdx: 0, ended: false, teamList: [], $teamEleById: {} };
   undoStack = [];
@@ -25,7 +56,10 @@ function initialize() {
     const teamIcon = teamIconAlt ? teamIconAlt : getTeamIcon(teamData[i], "main");
     $teamEle.innerHTML = `<span class='team-icon'><img src='${teamIcon.svg}'></span>
                       <span class='team-name'>${teamData[i].name}</span>
-                      <span class='team-rank'>${INITIAL_ELO_RANK}</span>
+                      <span class='team-rank' data-score="0">
+                        <span class='team-rank-icon'></span>
+                        <span class='team-rank-value'>-</span>
+                      </span>
                       `;
     const color = hexToRgb(teamData[i].colors[0].color.color); // The color on pos 0 is the real "main" one
     $teamEle.style = `background-color: rgba(${color.r}, ${color.g}, ${color.b}, 0.3);`;
@@ -156,6 +190,8 @@ function updateRender() {
     return 1;
   });
 
+  let srByTeam = getTeamsSrFromElo(simulationState.teamList);
+
   // See if we need to reorder them visually / update their scores
   for (let i in simulationState.teamList) {
     let team = simulationState.teamList[i];
@@ -173,16 +209,16 @@ function updateRender() {
     }
 
     const $score = $teamEle.children[2];
-    if (Math.floor(team.eloRating) != Number($score.innerHTML)) {
+    const teamSR = srByTeam[team.id];
+    if (teamSR != Number($score.dataset.score)) {
       // Our displayed score is outdated! Animate it to reach target
-      let o = { score: Number($score.innerHTML) };
       anime({
-        targets: o,
-        score: team.eloRating,
+        targets: $score.dataset,
+        score: teamSR,
         round: 1, // remove the decimals
         easing: 'linear',
         update: function () {
-          $score.innerHTML = o.score;
+          $score.innerHTML = $score.dataset.score;
         }
       })
     }
@@ -207,8 +243,8 @@ function updateEloRatings(teamA, teamB, wins, ties, losses) {
     sB = mapWrB;
   } else {
     // Otherwise, half of our score is from map wins, half is from actually winning games
-    sA = mapWrA / 2 + (wins[0] > wins[1] ? 0.5 : 0);
-    sB = mapWrB / 2 + (wins[1] > wins[0] ? 0.5 : 0);
+    sA = mapWrA * 1 / 2 + (wins[0] > wins[1] ? 1 / 2 : 0);
+    sB = mapWrB * 1 / 2 + (wins[1] > wins[0] ? 1 / 2 : 0);
   }
 
   const newRatingA = teamA.eloRating + ELO_K_BY_STAGE[simulationState.curStage] * (sA - eA);
@@ -225,7 +261,7 @@ function updateEloRatings(teamA, teamB, wins, ties, losses) {
 }
 
 //////////////////// MAIN \\\\\\\\\\\\\\\\\\\\\\\
-const INITIAL_ELO_RANK = 2000;
+const INITIAL_ELO_RANK = 1000;
 const ELO_K_BY_STAGE = {
   1: 75,
   2: 50,
