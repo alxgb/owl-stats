@@ -95,7 +95,7 @@ function initialize() {
       id: teamData[i].id,
       name: teamData[i].name, // for debugging purposes primarily
       abbreviatedName: teamData[i].abbreviatedName, // for debugging purposes primarily
-      eloRating: INITIAL_ELO_RANK,
+      eloRating: settings.initialEloRank,
       wins: 0,
       losses: 0,
       mapsWon: 0,
@@ -113,10 +113,11 @@ function undoStep() {
   }
 
   simulationState = undoStack.pop();
-  updateRender();
+  render();
 }
 
-function simulateStep() {
+function simulateStep(updateView) {
+  updateView = typeof updateView !== 'undefined' ? updateView : true;
   if (simulationState.ended) {
     // We're done. Nothing more to do here.
     return;
@@ -160,8 +161,9 @@ function simulateStep() {
   simulationState.matchList.push(match);
   simulationState.nextMatchIdx++;
 
-  // Update rendering
-  updateRender();
+  if (updateView) {
+    render();
+  }
 }
 
 function evaluateMatch(match) {
@@ -190,7 +192,8 @@ function evaluateMatch(match) {
 }
 
 let offsetsByPos;
-function updateRender() {
+let lastSliceStart = 0;
+function render() {
   // Calculate the Y pos of each rank
   if (typeof offsetsByPos == 'undefined') {
     offsetsByPos = {};
@@ -209,27 +212,35 @@ function updateRender() {
   const $matches = document.getElementById("matches");
   const sliceStart = Math.max(0, simulationState.matchList.length - 5);
   const matchHistory = simulationState.matchList.slice(sliceStart, sliceStart + 5).reverse();
-  console.log(sliceStart, matchHistory);
+  if (sliceStart - lastSliceStart != 0 && sliceStart - lastSliceStart != 1) {
+    $matches.innerHTML = ""; // Either backwards or a jump, rerender all
+  }
+  lastSliceStart = sliceStart;
+
   let renderedMatches = {};
   for (let $matchEle of $matches.children) {
     let associatedMatch = matchHistory.find((m) => m.id == $matchEle.dataset.id);
     if (typeof associatedMatch == "undefined") {
-      // This match no longer exists, fade it out & remove it
-      anime({
-        targets: $matchEle,
-        opacity: 0,
-        easing: 'easeOutSine',
-        duration: 1000 / speed,
-        complete: function (anim) {
-          $matchEle.remove();
-        }
-      });
+      // This match no longer exists
+      if ($matches.children.length > 6) {
+        $matchEle.remove(); // instaremove, too many
+      } else {
+        anime({ // fade it out & remove it after
+          targets: $matchEle,
+          opacity: 0,
+          easing: 'easeOutSine',
+          duration: 1000 / settings.animationSpeed,
+          complete: function (anim) {
+            $matchEle.remove();
+          }
+        });
+      }
       continue;
     }
 
     const associatedMatchIdx = matchHistory.indexOf(associatedMatch);
-    if ($matchEle.dataset.pos != associatedMatchIdx) {
-      $matchEle.dataset.pos = associatedMatchIdx;
+    if ($matchEle.dataset.idx != associatedMatchIdx) {
+      $matchEle.dataset.idx = associatedMatchIdx;
     }
 
     renderedMatches[associatedMatch.id] = true;
@@ -245,7 +256,7 @@ function updateRender() {
     let teamDataB = findTeamDataById(match.competitors[1].id);
     let $matchEle = document.createElement("div");
     $matchEle.className = 'match-wrapper';
-    $matchEle.dataset.pos = matchIdx;
+    $matchEle.dataset.idx = matchIdx;
     $matchEle.dataset.id = match.id;
     $matchEle.innerHTML = `
       <div class='match'>
@@ -260,7 +271,12 @@ function updateRender() {
         </span>
       </div>
     `;
-    $matches.prepend($matchEle);
+
+    if (Object.keys(renderedMatches).length >= Math.min(sliceStart, 4)) {
+      $matches.prepend($matchEle);
+    } else {
+      $matches.append($matchEle);
+    }
   }
 
 
@@ -286,7 +302,7 @@ function updateRender() {
       anime({
         targets: [$teamEle],
         translateY: offsetsByPos[i] - $teamEle.offsetTop,
-        duration: 1000 / speed,
+        duration: 1000 / settings.animationSpeed,
         easing: 'easeOutSine'
       });
 
@@ -296,7 +312,7 @@ function updateRender() {
     // ELO / SR
     const $score = $teamEle.children[2];
     let teamSR = srByTeam[team.id];
-    if (ROUND_TEAM_SR) {
+    if (settings.roundTeamSR) {
       teamSR = Math.round(teamSR / 100) * 100
     }
 
@@ -306,8 +322,8 @@ function updateRender() {
         targets: $score.dataset,
         score: teamSR,
         round: 1, // remove the decimals
-        easing: ROUND_TEAM_SR ? 'steps(5)' : 'steps(10)',
-        duration: 1000 / speed,
+        easing: settings.roundTeamSR ? 'steps(5)' : 'steps(10)',
+        duration: 1000 / settings.animationSpeed,
         update: function () {
           $score.children[1].innerHTML = $score.dataset.score;
           if (getRankBySR($score.dataset.score) != $score.dataset.rank) {
@@ -325,7 +341,7 @@ function updateRender() {
         value: team.eloRating,
         round: 1, // remove the decimals
         easing: 'linear',
-        duration: 1000 / speed,
+        duration: 1000 / settings.animationSpeed,
         update: function () {
           $internalScore.innerHTML = $internalScore.dataset.value;
         }
@@ -350,7 +366,7 @@ function updateEloRatings(teamA, teamB, wins, ties, losses) {
   const mapWrA = (wins[0] + 0.5 * ties[0]) / mapsPlayed;
   const mapWrB = (wins[1] + 0.5 * ties[1]) / mapsPlayed;
   let sA, sB;
-  if (ONLY_WEIGH_MAP_WINS) {
+  if (settings.onlyWeighMapWins) {
     // If we're only weighing map wins, we don't care whether this team won or lost
     sA = mapWrA;
     sB = mapWrB;
@@ -360,8 +376,8 @@ function updateEloRatings(teamA, teamB, wins, ties, losses) {
     sB = mapWrB * 1 / 2 + (wins[1] > wins[0] ? 1 / 2 : 0);
   }
 
-  const newRatingA = teamA.eloRating + ELO_K_BY_STAGE[simulationState.curStage] * (sA - eA);
-  const newRatingB = teamB.eloRating + ELO_K_BY_STAGE[simulationState.curStage] * (sB - eB);
+  const newRatingA = teamA.eloRating + settings.eloK_byStage[simulationState.curStage] * (sA - eA);
+  const newRatingB = teamB.eloRating + settings.eloK_byStage[simulationState.curStage] * (sB - eB);
 
   let trunc = (n, count) => Math.floor(n * Math.pow(10, count || 3)) / Math.pow(10, count || 3); // Truncate to count decimal pos
   console.log(`Match: ${teamA.name} vs ${teamB.name} (${wins[0]} - ${wins[1]}) | ` +
@@ -373,63 +389,150 @@ function updateEloRatings(teamA, teamB, wins, ties, losses) {
   teamB.eloRating = newRatingB;
 }
 
-//////////////////// MAIN \\\\\\\\\\\\\\\\\\\\\\\
-const INITIAL_ELO_RANK = 1000;
-const ELO_K_BY_STAGE = {
-  1: 75,
-  2: 50,
-  3: 50,
-  4: 125
-};
-const ONLY_WEIGH_MAP_WINS = false;
-const AUTOPLAY = true;
-const ROUND_TEAM_SR = true;
-
-// Global variables
-let undoStack;
-let speed = 1.5;
-let simulationState;
-
-// Setup the teams
-initialize();
-
-// TODO: Load API data
-console.log(schedule.data);
-
-// Cache the stage indexes once (map of stage number [1+] to the stage index)
-// This is necessary since the API list includes all stars and such
-let stageIndexes;
-if (typeof stageIndexes == "undefined") {
-  stageIndexes = {};
-  for (let i in schedule.data.stages) {
-    const stage = schedule.data.stages[i];
-    if (stage.id <= 3) { // stages 0 through 3
-      stageIndexes[stage.id + 1] = i;
-    }
+function updateSettingsDisplay() {
+  if (settings.autoplay) {
+    document.getElementById("controls-play").style = 'display: none';
+    document.getElementById("controls-pause").style = '';
+  } else {
+    document.getElementById("controls-pause").style = 'display: none';
+    document.getElementById("controls-play").style = '';
   }
+
+  document.getElementsByName("play-speed").forEach((e) => {
+    e.checked = false;
+  });
+  document.getElementById("play-x" + settings.playSpeed).checked = true;
+  document.getElementById("round-sr").checked = settings.roundTeamSR;
+  document.getElementById("only-weigh-map-wins").checked = settings.onlyWeighMapWins;
 }
 
-// Manual control
-window.addEventListener("keydown", (e) => {
-  if (e.code == "ArrowRight") {
-    simulateStep();
-  }
-  else if (e.code == "ArrowLeft") {
-    undoStep();
-  }
-})
-
-if (AUTOPLAY) {
-  speed = 2;
-
-  function autoSimulate() {
-    if (simulationState.ended) {
+function setupAutoplay() {
+  let playSimulation = () => {
+    if (simulationState.ended || !settings.autoplay) {
       return;
     }
 
     simulateStep();
-    setTimeout(autoSimulate, 500);
   }
 
-  setTimeout(autoSimulate, 500);
+  if (typeof autoplayInterval !== "undefined" && autoplayInterval) {
+    clearInterval(autoplayInterval);
+  }
+
+  if (settings.autoplay) {
+    autoplayInterval = setInterval(playSimulation, 500 / (2 / 3 * settings.playSpeed));
+  } else {
+    autoplayInterval = null;
+  }
 }
+
+// Global variables
+let undoStack;
+let settings;
+let simulationState;
+let stageIndexes;
+let autoplayInterval;
+
+window.onload = function () {
+  //////////////////// MAIN \\\\\\\\\\\\\\\\\\\\\\\
+  settings = {
+    initialEloRank: 1000,
+    eloK_byStage: {
+      1: 75,
+      2: 50,
+      3: 50,
+      4: 125
+    },
+    onlyWeighMapWins: false,
+    autoplay: true,
+    roundTeamSR: true,
+    animationSpeed: 2,
+    playSpeed: 1,
+  };
+  updateSettingsDisplay();
+  setupAutoplay(); // Autoplay logic, we'll just look at it every 500ms no matter what
+
+  // Setup the teams
+  initialize();
+
+  // TODO: Load API data
+  console.log(schedule.data);
+
+  // Cache the stage indexes once (map of stage number [1+] to the stage index)
+  // This is necessary since the API list includes all stars and such
+  if (typeof stageIndexes == "undefined") {
+    stageIndexes = {};
+    for (let i in schedule.data.stages) {
+      const stage = schedule.data.stages[i];
+      if (stage.id <= 3) { // stages 0 through 3
+        stageIndexes[stage.id + 1] = i;
+      }
+    }
+  }
+
+  // Setup key listeners for manual control
+  window.addEventListener("keydown", (e) => {
+    if (e.code == "ArrowRight") {
+      simulateStep();
+    }
+    else if (e.code == "ArrowLeft") {
+      undoStep();
+    }
+  });
+
+  // Setup button interactions
+  document.getElementById("controls-play").addEventListener("click", function () {
+    settings.autoplay = true;
+    updateSettingsDisplay();
+  });
+
+  document.getElementById("controls-pause").addEventListener("click", function () {
+    settings.autoplay = false;
+    updateSettingsDisplay();
+  });
+
+  document.getElementById("controls-backward").addEventListener("click", function () {
+    undoStep();
+  });
+
+  document.getElementById("controls-forward").addEventListener("click", function () {
+    simulateStep();
+  });
+
+  document.getElementById("controls-jump-forward").addEventListener("click", function () {
+    const startingStage = simulationState.curStage;
+    const startingWeek = simulationState.curWeekIdx;
+    while (simulationState.ended == false
+      && startingStage == simulationState.curStage
+      && startingWeek == simulationState.curWeekIdx) {
+
+      simulateStep(false); // Simulate without updating
+    }
+
+    document.getElementById("matches").innerHTML = ""; // nuke them, visual bug otherwise
+    render();
+  });
+
+  for (let $radioSpeedEle of document.getElementsByName("play-speed")) {
+    $radioSpeedEle.addEventListener("change", function (e) {
+      settings.playSpeed = e.target.value;
+      if (settings.playSpeed >= 2) {
+        settings.animationSpeed = 2.5;
+      } else {
+        settings.animationSpeed = 1.5;
+      }
+
+      setupAutoplay();
+      updateSettingsDisplay();
+    });
+  }
+
+  document.getElementById("round-sr").addEventListener("change", function (e) {
+    settings.roundTeamSR = e.target.checked;
+    render();
+  });
+
+  document.getElementById("only-weigh-map-wins").addEventListener("change", function (e) {
+    settings.onlyWeighMapWins = e.target.checked;
+  });
+};

@@ -6,6 +6,8 @@
   <meta name="viewport" content="initial-scale=1, width=device-width">
   <link href="https://fonts.googleapis.com/css?family=Noto+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/fontawesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/solid.min.css">
   <link rel="stylesheet" href="./styling.css">
 </head>
 
@@ -32,95 +34,53 @@
 
       <div class='right-area'>
         <div id='matches'>
-          <!-- <div class='match-wrapper' data-pos="0">
-            <div class='main-match match'>
-              <span class='match-team-wrapper'>
-                <div class='match-team-icon'><img
-                    src="https://bnetcmsus-a.akamaihd.net/cms/page_media/3U5YDUD6JRGK1544056009724.svg"></div>
-                <div class='match-team-name'>VAN</div>
-              </span>
-              <span class='match-team-result'>3 - 1</span>
-              <span class='match-team-wrapper'>
-                <div class='match-team-icon'><img
-                    src="https://bnetcmsus-a.akamaihd.net/cms/page_media/LLMV1UTBVHN11544055825034.svg"></div>
-                <div class='match-team-name'>DAL</div>
-              </span>
-            </div>
-          </div>
-
-          <div class='match-wrapper' data-pos="not-0">
-            <div class='match'>
-              <span class='match-team-wrapper'>
-                <div class='match-team-icon'><img
-                    src="https://bnetcmsus-a.akamaihd.net/cms/page_media/3U5YDUD6JRGK1544056009724.svg"></div>
-                <div class='match-team-name'>VAN</div>
-              </span>
-              <span class='match-team-result'>3 - 1</span>
-              <span class='match-team-wrapper'>
-                <div class='match-team-icon'><img
-                    src="https://bnetcmsus-a.akamaihd.net/cms/page_media/LLMV1UTBVHN11544055825034.svg"></div>
-                <div class='match-team-name'>DAL</div>
-              </span>
-            </div>
-          </div>
-
-          <div class='match-wrapper' data-pos="not-0">
-            <div class='match'>
-              <span class='match-team-wrapper'>
-                <div class='match-team-icon'><img
-                    src="https://bnetcmsus-a.akamaihd.net/cms/page_media/3U5YDUD6JRGK1544056009724.svg"></div>
-                <div class='match-team-name'>VAN</div>
-              </span>
-              <span class='match-team-result'>3 - 1</span>
-              <span class='match-team-wrapper'>
-                <div class='match-team-icon'><img
-                    src="https://bnetcmsus-a.akamaihd.net/cms/page_media/LLMV1UTBVHN11544055825034.svg"></div>
-                <div class='match-team-name'>DAL</div>
-              </span>
-            </div>
-          </div>
-
-          <div class='match-wrapper' data-pos="2">
-            <div class='match'>
-              <span class='match-team-wrapper'>
-                <div class='match-team-icon'><img
-                    src="https://bnetcmsus-a.akamaihd.net/cms/page_media/3U5YDUD6JRGK1544056009724.svg"></div>
-                <div class='match-team-name'>VAN</div>
-              </span>
-              <span class='match-team-result'>3 - 1</span>
-              <span class='match-team-wrapper'>
-                <div class='match-team-icon'><img
-                    src="https://bnetcmsus-a.akamaihd.net/cms/page_media/LLMV1UTBVHN11544055825034.svg"></div>
-                <div class='match-team-name'>DAL</div>
-              </span>
-            </div>
-          </div>
-          <div class='match-wrapper' data-pos="2">
-            <div class='match'>
-              <span class='match-team-wrapper'>
-                <div class='match-team-icon'><img
-                    src="https://bnetcmsus-a.akamaihd.net/cms/page_media/3U5YDUD6JRGK1544056009724.svg"></div>
-                <div class='match-team-name'>VAN</div>
-              </span>
-              <span class='match-team-result'>3 - 1</span>
-              <span class='match-team-wrapper'>
-                <div class='match-team-icon'><img
-                    src="https://bnetcmsus-a.akamaihd.net/cms/page_media/LLMV1UTBVHN11544055825034.svg"></div>
-                <div class='match-team-name'>DAL</div>
-              </span>
-            </div>
-          </div> -->
+          <!-- Filled by JS -->
         </div>
 
-        <div class='settings'> - </div>
+        <div id='settings'>
+          <h4>SETTINGS</h4>
+          <div class='setting'>
+            <div class='setting-title'>Controls</div>
+            <div class='setting-value'>
+              <i class="fas fa-fast-backward player-control" id="controls-jump-backward"></i>
+              <i class="fas fa-step-backward player-control" id="controls-backward"></i>
+              <i class="fas fa-play player-control" id="controls-play"></i>
+              <i class="fas fa-pause player-control" id="controls-pause"></i>
+              <i class="fas fa-step-forward player-control" id="controls-forward"></i>
+              <i class="fas fa-fast-forward player-control" id="controls-jump-forward"></i>
+            </div>
+          </div>
+          <div class='setting'>
+            <div class='setting-title'>Play speed</div>
+            <div class='setting-value'>
+              <input type="radio" id="play-x1" name="play-speed" value="1"> <label for="play-x1">x1</label>
+              <input type="radio" id="play-x2" name="play-speed" value="2"> <label for="play-x2">x2</label>
+              <input type="radio" id="play-x4" name="play-speed" value="4"> <label for="play-x4">x4</label>
+            </div>
+          </div>
+          <br /> <br />
+          <div class='setting'>
+            <div class='setting-title'>Round SR</div>
+            <div class='setting-value'>
+              <input class="tgl tgl-skewed" id="round-sr" type="checkbox" />
+              <label class="tgl-btn" data-tg-off="No" data-tg-on="Yes" for="round-sr"></label>
+            </div>
+          </div>
+          <div class='setting'>
+            <div class='setting-title'>Exclusively use map wins</div>
+            <div class='setting-value'>
+              <input class="tgl tgl-skewed" id="only-weigh-map-wins" type="checkbox" />
+              <label class="tgl-btn" data-tg-off="No" data-tg-on="Yes" for="only-weigh-map-wins"></label>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-  </div>
-  <script src="./data.js"></script>
-  <script src="./schedule.json"></script>
-  <script src="./logic.js"></script>
-  <script src="./anime.min.js" async></script>
+    </div>
+    <script src="./data.js"></script>
+    <script src="./schedule.json"></script>
+    <script src="./logic.js"></script>
+    <script src="./anime.min.js" async></script>
 </body>
 
 </html>
