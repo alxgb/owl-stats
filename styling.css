@@ -159,6 +159,7 @@ html, body {
 #matches {
     margin-top: 30px;
     text-align: center;
+    min-width: 260px;
 }
 
 .match-wrapper {

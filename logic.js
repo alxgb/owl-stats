@@ -378,6 +378,7 @@ const ELO_K_BY_STAGE = {
   4: 125
 };
 const ONLY_WEIGH_MAP_WINS = false;
+const AUTOPLAY = true;
 
 // Global variables
 let undoStack;
@@ -403,7 +404,7 @@ if (typeof stageIndexes == "undefined") {
   }
 }
 
-// Run
+// Manual control
 window.addEventListener("keydown", (e) => {
   if (e.code == "ArrowRight") {
     simulateStep();
@@ -412,3 +413,18 @@ window.addEventListener("keydown", (e) => {
     undoStep();
   }
 })
+
+if (AUTOPLAY) {
+  speed = 2;
+
+  function autoSimulate() {
+    if (simulationState.ended) {
+      return;
+    }
+
+    simulateStep();
+    setTimeout(autoSimulate, 500);
+  }
+
+  setTimeout(autoSimulate, 500);
+}
