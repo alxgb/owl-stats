@@ -404,6 +404,10 @@ function updateSettingsDisplay() {
   document.getElementById("play-x" + settings.playSpeed).checked = true;
   document.getElementById("round-sr").checked = settings.roundTeamSR;
   document.getElementById("only-weigh-map-wins").checked = settings.onlyWeighMapWins;
+
+  for (let stage of [1, 2, 3, 4]) {
+    document.getElementById("elo-k-stage-" + stage).value = settings.eloK_byStage[stage];
+  }
 }
 
 function setupAutoplay() {
@@ -426,6 +430,24 @@ function setupAutoplay() {
   }
 }
 
+function recalculateToCurrentState() {
+  // Redo everything from the start, silently simulate until our current point, then render
+  const finalStage = simulationState.curStage;
+  const finalWeek = simulationState.curWeekIdx;
+  const nextMatchIdx = simulationState.nextMatchIdx;
+
+  initialize();
+  while (simulationState.ended == false
+    && (finalStage == simulationState.curStage
+      && finalWeek == simulationState.curWeekIdx
+      && nextMatchIdx == simulationState.nextMatchIdx) == false) {
+
+    simulateStep(false); // Simulate without rendering
+  }
+
+  render();
+}
+
 // Global variables
 let undoStack;
 let settings;
@@ -444,7 +466,7 @@ window.onload = function () {
       4: 125
     },
     onlyWeighMapWins: false,
-    autoplay: true,
+    autoplay: window.location.hash.includes("no-autoplay") == false,
     roundTeamSR: true,
     animationSpeed: 2,
     playSpeed: 1,
@@ -483,11 +505,15 @@ window.onload = function () {
   // Setup button interactions
   document.getElementById("controls-play").addEventListener("click", function () {
     settings.autoplay = true;
+    window.location.hash = "#";
+    setupAutoplay();
     updateSettingsDisplay();
   });
 
   document.getElementById("controls-pause").addEventListener("click", function () {
     settings.autoplay = false;
+    window.location.hash = "#no-autoplay";
+    setupAutoplay();
     updateSettingsDisplay();
   });
 
@@ -509,7 +535,6 @@ window.onload = function () {
       simulateStep(false); // Simulate without updating
     }
 
-    document.getElementById("matches").innerHTML = ""; // nuke them, visual bug otherwise
     render();
   });
 
@@ -534,5 +559,13 @@ window.onload = function () {
 
   document.getElementById("only-weigh-map-wins").addEventListener("change", function (e) {
     settings.onlyWeighMapWins = e.target.checked;
+    recalculateToCurrentState();
   });
+
+  for (let stage of [1, 2, 3, 4]) {
+    document.getElementById("elo-k-stage-" + stage).addEventListener("keyup", function (e) {
+      settings.eloK_byStage[stage] = Math.max(1, Number(e.target.value));
+      recalculateToCurrentState();
+    });
+  }
 };

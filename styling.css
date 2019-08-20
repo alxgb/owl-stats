@@ -338,10 +338,17 @@ html, body {
 
 .setting-title {
     margin-bottom: 5px;
+    font-weight: bold;
 }
 
 .player-control {
     padding: 3px;
     font-size: 1.2em;
     cursor: pointer;
+}
+
+input.elo-k {
+    width: 50px;
+    padding: 0 5px;
+    margin: 0 5px;
 }
