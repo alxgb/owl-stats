@@ -13,24 +13,25 @@ function deepClone(e) {
 }
 
 function getRankBySR(sr) {
-  const breakpoints = {
-    1500: "bronze",
-    2000: "silver",
-    2500: "gold",
-    3000: "plat",
-    3500: "diamond",
-    4000: "master",
-    5000: "gm"
-  };
+  const breakpoints = [
+    [1500, "bronze"],
+    [2000, "silver"],
+    [2500, "gold"],
+    [3000, "plat"],
+    [3500, "diamond"],
+    [4000, "master"],
+    [9999, "gm"]
+  ];
 
-  for (let breakpoint of Object.keys(breakpoints)) {
-    if (sr < breakpoint) {
-      return breakpoints[breakpoint];
+  for (let breakpoint of breakpoints) {
+    if (sr < breakpoint[0]) {
+      return breakpoint[1];
     }
   }
 
   return "bronze";
 }
+
 function getTeamsSrFromElo(teamList) {
   // Normalize all team's elos, then just build a distribution from 4.5k to 500
   let sum = 0;
@@ -63,7 +64,7 @@ function getTeamsSrFromElo(teamList) {
 }
 
 function initialize() {
-  simulationState = { curStage: 1, curWeekIdx: 0, nextMatchIdx: 0, ended: false, teamList: [], $teamEleById: {} };
+  simulationState = { curStage: 1, curWeekIdx: 0, nextMatchIdx: 0, ended: false, teamList: [], $teamEleById: {}, matchList: [] };
   undoStack = [];
 
   let $teams = document.getElementById("teams");
@@ -156,6 +157,7 @@ function simulateStep() {
 
   // Take this match into account for rankings
   evaluateMatch(match);
+  simulationState.matchList.push(match);
   simulationState.nextMatchIdx++;
 
   // Update rendering
@@ -203,6 +205,65 @@ function updateRender() {
   document.getElementById("stage-num").innerHTML = simulationState.curStage;
   document.getElementById("week-num").innerHTML = simulationState.curWeekIdx + 1;
 
+  // Update matches (only show the last 5). Implemented by using a sliding slice
+  const $matches = document.getElementById("matches");
+  const sliceStart = Math.max(0, simulationState.matchList.length - 5);
+  const matchHistory = simulationState.matchList.slice(sliceStart, sliceStart + 5).reverse();
+  console.log(sliceStart, matchHistory);
+  let renderedMatches = {};
+  for (let $matchEle of $matches.children) {
+    let associatedMatch = matchHistory.find((m) => m.id == $matchEle.dataset.id);
+    if (typeof associatedMatch == "undefined") {
+      // This match no longer exists, fade it out
+      anime({
+        targets: $matchEle,
+        opacity: 0,
+        easing: 'easeOutSine',
+        duration: 1000 / speed,
+        complete: function (anim) {
+          $matchEle.remove();
+        }
+      });
+      continue;
+    }
+
+    const associatedMatchIdx = matchHistory.indexOf(associatedMatch);
+    if ($matchEle.dataset.pos != associatedMatchIdx) {
+      $matchEle.dataset.pos = associatedMatchIdx;
+    }
+
+    renderedMatches[associatedMatch.id] = true;
+  }
+
+  for (let matchIdx in matchHistory) {
+    const match = matchHistory[matchIdx];
+    if (renderedMatches[match.id]) {
+      continue;
+    }
+
+    let teamDataA = findTeamDataById(match.competitors[0].id);
+    let teamDataB = findTeamDataById(match.competitors[1].id);
+    let $matchEle = document.createElement("div");
+    $matchEle.className = 'match-wrapper';
+    $matchEle.dataset.pos = matchIdx;
+    $matchEle.dataset.id = match.id;
+    $matchEle.innerHTML = `
+      <div class='match'>
+        <span class='match-team-wrapper'>
+          <div class='match-team-icon'><img src="${getTeamAltIcon(match.competitors[0].id).svg}"></div>
+          <div class='match-team-name'>${teamDataA.abbreviatedName}</div>
+        </span>
+        <span class='match-team-result'>${match.scores[0].value} - ${match.scores[1].value}</span>
+        <span class='match-team-wrapper'>
+          <div class='match-team-icon'><img src="${getTeamAltIcon(match.competitors[1].id).svg}"></div>
+          <div class='match-team-name'>${teamDataB.abbreviatedName}</div>
+        </span>
+      </div>
+    `;
+    $matches.prepend($matchEle);
+  }
+
+
   // Sort teams by score
   simulationState.teamList.sort((a, b) => {
     if (a.eloRating > b.eloRating) {
@@ -225,7 +286,7 @@ function updateRender() {
       anime({
         targets: [$teamEle],
         translateY: offsetsByPos[i] - $teamEle.offsetTop,
-        duration: 1000,
+        duration: 1000 / speed,
         easing: 'easeOutSine'
       });
 
@@ -242,6 +303,7 @@ function updateRender() {
         score: teamSR,
         round: 1, // remove the decimals
         easing: 'linear',
+        duration: 1000 / speed,
         update: function () {
           $score.children[1].innerHTML = $score.dataset.score;
           if (getRankBySR($score.dataset.score) != $score.dataset.rank) {
@@ -259,6 +321,7 @@ function updateRender() {
         value: team.eloRating,
         round: 1, // remove the decimals
         easing: 'linear',
+        duration: 1000 / speed,
         update: function () {
           $internalScore.innerHTML = $internalScore.dataset.value;
         }
@@ -318,6 +381,7 @@ const ONLY_WEIGH_MAP_WINS = false;
 
 // Global variables
 let undoStack;
+let speed = 1.5;
 let simulationState;
 
 // Setup the teams

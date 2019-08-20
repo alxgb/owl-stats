@@ -17,7 +17,12 @@ html, body {
 }
 
 .content {
-    max-width: 480px;
+    max-width: 980px;
+}
+
+.ranking, .right-area {
+    display: inline-block;
+    margin: 0 20px;
 }
 
 /* Time */
@@ -139,4 +144,75 @@ html, body {
 .team-record {
     min-width: 70px;
     text-align: center;
+}
+
+/* Right side */
+.right-area {
+    vertical-align: top;
+}
+
+#matches, .settings {
+    height: 45%;
+}
+
+/* Match results */
+#matches {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.match-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.match {
+    display: flex;
+    padding: 15px;
+    border: 2px #f83 dashed;
+    border-radius: 3px;
+    justify-content: center;
+    margin: 5px 0;
+}
+
+.match-team-result {
+    align-self: center;
+}
+
+.match-team-wrapper {
+    text-align: center;
+}
+
+.match-team-icon img {
+    width: 50px;
+}
+
+.match-team-name {
+    font-size: 0.6em;
+    font-weight: bold;
+}
+
+.match-team-result {
+    margin: 0 30px;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.match-wrapper:not([data-pos="0"]) .match {
+    height: 30px;
+    width: 160px;
+    font-size: 0.6em;
+}
+
+.match-wrapper:not([data-pos="0"]) .match-team-name {
+    display: none;
+}
+
+.match-wrapper:not([data-pos="0"]) .match {
+    border: 1px rgb(164, 131, 108) dashed;
+}
+
+.match-wrapper:not([data-pos="0"])  img {
+    height: 30px;
+    width: 30px;
 }

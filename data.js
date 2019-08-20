@@ -52,10 +52,16 @@ function getTeamColor(team, usage) {
   }
 }
 
-function findTeamById(id) {
+function findTeamDataById(id) {
   for (let team of teamData) {
     if (team.id == id) {
       return team;
     }
   }
+}
+
+function getTeamAltIcon(id) {
+  const t = findTeamDataById(id);
+  const teamIconAlt = getTeamIcon(t, "altDark");
+  return teamIconAlt ? teamIconAlt : getTeamIcon(t, "main");
 }
