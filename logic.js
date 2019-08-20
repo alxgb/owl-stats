@@ -83,6 +83,7 @@ function initialize() {
                         <span class='team-rank-value'>-</span>
                       </span>
                       <span class='team-internal-rank' data-value="0">-</span>
+                      <span class='team-record'>0 - 0</span>
                       `;
     const color = hexToRgb(teamData[i].colors[0].color.color); // The color on pos 0 is the real "main" one
     $teamEle.style = `background-color: rgba(${color.r}, ${color.g}, ${color.b}, 0.3);`;
@@ -231,6 +232,7 @@ function updateRender() {
       $teamEle.dataset.pos = i;
     }
 
+    // ELO / SR
     const $score = $teamEle.children[2];
     const teamSR = srByTeam[team.id];
     if (teamSR != Number($score.dataset.score)) {
@@ -262,6 +264,10 @@ function updateRender() {
         }
       });
     }
+
+    // WL
+    const $wl = $teamEle.children[4];
+    $wl.innerHTML = `${team.wins} - ${team.losses}`;
   }
 }
 

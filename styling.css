@@ -17,7 +17,7 @@ html, body {
 }
 
 .content {
-    max-width: 420px;
+    max-width: 480px;
 }
 
 /* Time */
@@ -72,7 +72,7 @@ html, body {
     margin: 4px 0;
 }
 
-#teams .team-icon, #teams .team-name, #teams .team-rank, #teams .team-internal-rank {
+#teams .team-icon, #teams .team-name, #teams .team-rank, #teams .team-internal-rank, #teams .team-record {
     height: 30px;
     line-height: 30px;
 }
@@ -86,7 +86,7 @@ html, body {
     width: 30px;
 }
 
-.team-name, .team-rank, .team-internal-rank {
+.team-name, .team-rank, .team-internal-rank, .team-record {
     padding: 3px 0;
 }
 
@@ -98,7 +98,7 @@ html, body {
     display: none;
 }
 
-@media (max-width: 400px) {
+@media (max-width: 600px) {
     .team-name-full {
         display: none;
     }
@@ -126,6 +126,17 @@ html, body {
 
 .team-internal-rank {
     min-width: 40px;
-    margin: 0 5px;
+    margin: 0 13px;
+    text-align: center;
+}
+
+@media (max-width: 400px) {
+    .team-internal-rank {
+        margin: 0 8px;
+    }
+}
+
+.team-record {
+    min-width: 70px;
     text-align: center;
 }
