@@ -214,7 +214,7 @@ function updateRender() {
   for (let $matchEle of $matches.children) {
     let associatedMatch = matchHistory.find((m) => m.id == $matchEle.dataset.id);
     if (typeof associatedMatch == "undefined") {
-      // This match no longer exists, fade it out
+      // This match no longer exists, fade it out & remove it
       anime({
         targets: $matchEle,
         opacity: 0,
@@ -295,14 +295,18 @@ function updateRender() {
 
     // ELO / SR
     const $score = $teamEle.children[2];
-    const teamSR = srByTeam[team.id];
+    let teamSR = srByTeam[team.id];
+    if (ROUND_TEAM_SR) {
+      teamSR = Math.round(teamSR / 100) * 100
+    }
+
     if (teamSR != Number($score.dataset.score)) {
       // Our displayed score is outdated! Animate it to reach target
       anime({
         targets: $score.dataset,
         score: teamSR,
         round: 1, // remove the decimals
-        easing: 'linear',
+        easing: ROUND_TEAM_SR ? 'steps(5)' : 'steps(10)',
         duration: 1000 / speed,
         update: function () {
           $score.children[1].innerHTML = $score.dataset.score;
@@ -379,6 +383,7 @@ const ELO_K_BY_STAGE = {
 };
 const ONLY_WEIGH_MAP_WINS = false;
 const AUTOPLAY = true;
+const ROUND_TEAM_SR = true;
 
 // Global variables
 let undoStack;

@@ -151,15 +151,12 @@ html, body {
     vertical-align: top;
 }
 
-#matches, .settings {
-    height: 45%;
-}
-
 /* Match results */
 #matches {
     margin-top: 30px;
     text-align: center;
     min-width: 260px;
+    height: 50%;
 }
 
 .match-wrapper {
@@ -216,4 +213,9 @@ html, body {
 .match-wrapper:not([data-pos="0"])  img {
     height: 30px;
     width: 30px;
+}
+
+/* Settings */
+#settings {
+    margin-top: 30px;
 }
