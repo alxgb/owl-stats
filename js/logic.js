@@ -449,6 +449,7 @@ function recalculateToCurrentState() {
 }
 
 // Global variables
+let schedule;
 let undoStack;
 let settings;
 let simulationState;
@@ -475,22 +476,24 @@ window.onload = function () {
   setupAutoplay(); // Autoplay logic, we'll just look at it every 500ms no matter what
 
   // Setup the teams
-  initialize();
+  fetch("https://api.overwatchleague.com/schedule?locale=en-us&season=2019&separateStagePlayoffsWeek=true")
+    .then((data) => data.json())
+    .then((json) => {
+      schedule = json;
+      initialize();
 
-  // TODO: Load API data
-  console.log(schedule.data);
-
-  // Cache the stage indexes once (map of stage number [1+] to the stage index)
-  // This is necessary since the API list includes all stars and such
-  if (typeof stageIndexes == "undefined") {
-    stageIndexes = {};
-    for (let i in schedule.data.stages) {
-      const stage = schedule.data.stages[i];
-      if (stage.id <= 3) { // stages 0 through 3
-        stageIndexes[stage.id + 1] = i;
+      // Cache the stage indexes once (map of stage number [1+] to the stage index)
+      // This is necessary since the API list includes all stars and such
+      if (typeof stageIndexes == "undefined") {
+        stageIndexes = {};
+        for (let i in schedule.data.stages) {
+          const stage = schedule.data.stages[i];
+          if (stage.id <= 3) { // stages 0 through 3
+            stageIndexes[stage.id + 1] = i;
+          }
+        }
       }
-    }
-  }
+    });
 
   // Setup key listeners for manual control
   window.addEventListener("keydown", (e) => {
